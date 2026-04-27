@@ -1,6 +1,5 @@
 package com.wordhint.teleprompter
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
@@ -15,8 +14,10 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 
-class MainActivity : Activity() {
+class MainActivity : ComponentActivity() {
     private lateinit var repository: ScriptRepository
     private lateinit var titleEdit: EditText
     private lateinit var contentEdit: EditText
@@ -38,6 +39,19 @@ class MainActivity : Activity() {
     private var suppressSave = false
 
     private val autoSaveRunnable = Runnable { saveCurrentScript() }
+    private val scriptPickerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        val data = result.data ?: return@registerForActivityResult
+        if (data.getBooleanExtra(ScriptPickerActivity.EXTRA_CREATE_NEW, false)) {
+            showScript(repository.save(repository.createDraft()))
+            return@registerForActivityResult
+        }
+        val selectedId = data.getStringExtra(ScriptPickerActivity.EXTRA_SCRIPT_ID).orEmpty()
+        val selectedScript = repository.loadScript(selectedId) ?: return@registerForActivityResult
+        showScript(selectedScript)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -152,23 +166,8 @@ class MainActivity : Activity() {
     }
 
     private fun showScriptPicker() {
-        val scripts = repository.loadScripts()
-        if (scripts.isEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle("稿件")
-                .setMessage("还没有保存的稿件。")
-                .setPositiveButton("知道了", null)
-                .show()
-            return
-        }
-
-        val labels = scripts.map { "${it.title}\n${it.content.take(32)}" }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle("选择稿件")
-            .setItems(labels) { _, which -> showScript(scripts[which]) }
-            .setPositiveButton("新建") { _, _ -> showScript(repository.save(repository.createDraft())) }
-            .setNegativeButton("取消", null)
-            .show()
+        saveCurrentScript()
+        scriptPickerLauncher.launch(Intent(this, ScriptPickerActivity::class.java))
     }
 
     private fun showDisplaySettings() {
