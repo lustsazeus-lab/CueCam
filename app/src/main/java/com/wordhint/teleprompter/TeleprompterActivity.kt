@@ -21,10 +21,12 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.CaptureRequestOptions
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.PendingRecording
@@ -419,6 +421,7 @@ class TeleprompterActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalCamera2Interop::class)
     private fun startCameraPreview() {
         val future = ProcessCameraProvider.getInstance(this)
         future.addListener({
