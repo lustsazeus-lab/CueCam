@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_bg">#FFF9F2</color>
+    <color name="panel_bg">#FFFFFF</color>
+    <color name="primary">#FF8E7A</color>
+    <color name="primary_dark">#E46F5D</color>
+    <color name="text_main">#222222</color>
+    <color name="text_muted">#707070</color>
+    <color name="teleprompter_bg">#050505</color>
+</resources>
