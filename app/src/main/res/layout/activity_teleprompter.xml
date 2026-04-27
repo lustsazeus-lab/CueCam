@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/teleprompter_bg">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/cameraPreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:implementationMode="performance"
+        app:scaleType="fillCenter" />
 
     <ScrollView
         android:id="@+id/prompterScroll"
@@ -26,13 +35,29 @@
             android:textIsSelectable="false" />
     </ScrollView>
 
+    <TextView
+        android:id="@+id/recordTimerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="18dp"
+        android:background="@drawable/glass_pill_background"
+        android:paddingLeft="12dp"
+        android:paddingTop="6dp"
+        android:paddingRight="12dp"
+        android:paddingBottom="6dp"
+        android:text="REC 00:00"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/controlPanel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_margin="14dp"
-        android:background="@drawable/control_panel_background"
+        android:background="@drawable/glass_panel_background"
         android:orientation="vertical"
         android:visibility="gone">
 
@@ -79,6 +104,7 @@
                 android:layout_width="0dp"
                 android:layout_height="44dp"
                 android:layout_weight="1"
+                android:background="@drawable/glass_button_background"
                 android:text="暂停" />
 
             <Space
@@ -90,6 +116,7 @@
                 android:layout_width="0dp"
                 android:layout_height="44dp"
                 android:layout_weight="1"
+                android:background="@drawable/glass_button_background"
                 android:text="颜色" />
 
             <Space
@@ -101,7 +128,78 @@
                 android:layout_width="0dp"
                 android:layout_height="44dp"
                 android:layout_weight="1"
+                android:background="@drawable/glass_button_background"
                 android:text="退出" />
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/cameraToggleButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_button_background"
+                android:text="开摄像头" />
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="1dp" />
+
+            <Button
+                android:id="@+id/switchLensButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_button_background"
+                android:text="切后置" />
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="1dp" />
+
+            <Button
+                android:id="@+id/recordButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_button_background"
+                android:text="开始录制" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/overlayAlphaLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="提词遮罩透明度：112/255"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp" />
+
+        <SeekBar
+            android:id="@+id/overlayAlphaSeek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/qualityButton"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/glass_button_background"
+            android:text="画质/FPS：1080p 30fps" />
+
+        <Button
+            android:id="@+id/systemCameraButton"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/glass_button_background"
+            android:text="调用系统相机录像" />
     </LinearLayout>
 </FrameLayout>

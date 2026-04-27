@@ -1,12 +1,15 @@
 package com.wordhint.teleprompter
 
-import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.util.Range
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
@@ -16,8 +19,32 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.CaptureRequestOptions
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FileOutputOptions
+import androidx.camera.video.PendingRecording
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.Recording
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent
+import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
+import android.hardware.camera2.CaptureRequest
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class TeleprompterActivity : Activity() {
+class TeleprompterActivity : ComponentActivity() {
     private lateinit var repository: ScriptRepository
     private lateinit var scrollView: ScrollView
     private lateinit var prompterText: TextView
@@ -28,6 +55,15 @@ class TeleprompterActivity : Activity() {
     private lateinit var speedSeek: SeekBar
     private lateinit var fontSeek: SeekBar
     private lateinit var playPauseButton: Button
+    private lateinit var previewView: PreviewView
+    private lateinit var cameraToggleButton: Button
+    private lateinit var lensSwitchButton: Button
+    private lateinit var recordButton: Button
+    private lateinit var systemCameraButton: Button
+    private lateinit var alphaSeek: SeekBar
+    private lateinit var alphaLabel: TextView
+    private lateinit var qualityButton: Button
+    private lateinit var timerText: TextView
 
     private val handler = Handler(Looper.getMainLooper())
     private var script: Script? = null
@@ -36,6 +72,41 @@ class TeleprompterActivity : Activity() {
     private var downScrollY = 0
     private var dragging = false
     private var scrollRemainder = 0f
+
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var videoCapture: VideoCapture<Recorder>? = null
+    private var recording: Recording? = null
+    private var cameraEnabled = false
+    private var lensFacing = CameraSelector.LENS_FACING_FRONT
+    private var overlayAlpha = DEFAULT_OVERLAY_ALPHA
+    private var selectedQuality = Quality.FHD
+    private var selectedFps = 30
+    private var recordingStartMs = 0L
+
+    private val permissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        val allGranted = result.values.all { it }
+        if (allGranted) {
+            startCameraPreview()
+        } else {
+            playStateText.text = "未获得摄像头/麦克风权限，无法录制。"
+            showControls()
+            updateCameraButtons()
+        }
+    }
+
+    private val systemCameraLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val ok = result.resultCode == RESULT_OK
+        playStateText.text = if (ok) {
+            "系统相机已完成录制，已返回提词页面。"
+        } else {
+            "系统相机已取消录制。"
+        }
+        showControls()
+    }
 
     private val scrollTick = object : Runnable {
         override fun run() {
@@ -47,6 +118,14 @@ class TeleprompterActivity : Activity() {
     }
 
     private val hideControlsRunnable = Runnable { controlPanel.visibility = View.GONE }
+    private val recordingTicker = object : Runnable {
+        override fun run() {
+            if (recording != null) {
+                updateRecordingTimer()
+                handler.postDelayed(this, 1000L)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,10 +148,12 @@ class TeleprompterActivity : Activity() {
         super.onPause()
         handler.removeCallbacks(scrollTick)
         saveSettings()
+        stopRecordingIfNeeded()
     }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        cameraProvider?.unbindAll()
         super.onDestroy()
     }
 
@@ -86,6 +167,16 @@ class TeleprompterActivity : Activity() {
         speedSeek = findViewById(R.id.playSpeedSeek)
         fontSeek = findViewById(R.id.playFontSeek)
         playPauseButton = findViewById(R.id.playPauseButton)
+        previewView = findViewById(R.id.cameraPreview)
+        cameraToggleButton = findViewById(R.id.cameraToggleButton)
+        lensSwitchButton = findViewById(R.id.switchLensButton)
+        recordButton = findViewById(R.id.recordButton)
+        systemCameraButton = findViewById(R.id.systemCameraButton)
+        alphaSeek = findViewById(R.id.overlayAlphaSeek)
+        alphaLabel = findViewById(R.id.overlayAlphaLabel)
+        qualityButton = findViewById(R.id.qualityButton)
+        timerText = findViewById(R.id.recordTimerText)
+
         findViewById<Button>(R.id.colorButton).setOnClickListener { showColorSettings() }
         findViewById<Button>(R.id.exitButton).setOnClickListener { finish() }
     }
@@ -111,6 +202,9 @@ class TeleprompterActivity : Activity() {
         speedSeek.progress = loaded.speed - ScriptSettings.MIN_SPEED
         fontSeek.progress = loaded.fontSize - ScriptSettings.MIN_FONT_SIZE
         updateControlLabels()
+        updateCameraButtons()
+        alphaSeek.progress = overlayAlpha - MIN_OVERLAY_ALPHA
+        updateAlphaLabel()
     }
 
     private fun setupControls() {
@@ -131,6 +225,53 @@ class TeleprompterActivity : Activity() {
             showControls()
             saveSettings()
         })
+
+        cameraToggleButton.setOnClickListener {
+            if (cameraEnabled) {
+                disableCameraPreview()
+                playStateText.text = "摄像头已关闭，提词继续全屏。"
+            } else {
+                ensureCameraPermissionsAndStart()
+            }
+            showControls()
+        }
+        lensSwitchButton.setOnClickListener {
+            lensFacing = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
+                CameraSelector.LENS_FACING_BACK
+            } else {
+                CameraSelector.LENS_FACING_FRONT
+            }
+            if (cameraEnabled) {
+                startCameraPreview()
+            }
+            showControls()
+        }
+        recordButton.setOnClickListener {
+            if (recording == null) {
+                startRecording()
+            } else {
+                stopRecordingIfNeeded()
+            }
+            showControls()
+        }
+        systemCameraButton.setOnClickListener {
+            launchSystemCamera()
+            showControls()
+        }
+        alphaSeek.max = MAX_OVERLAY_ALPHA - MIN_OVERLAY_ALPHA
+        alphaSeek.setOnSeekBarChangeListener(simpleSeekListener {
+            overlayAlpha = alphaSeek.progress + MIN_OVERLAY_ALPHA
+            updateAlphaLabel()
+            applyColors(
+                script?.textColor ?: Color.WHITE,
+                script?.backgroundColor ?: Color.BLACK
+            )
+            showControls()
+        })
+        qualityButton.setOnClickListener {
+            showVideoOptionsDialog()
+            showControls()
+        }
     }
 
     private fun applyResponsivePromptPadding() {
@@ -153,6 +294,7 @@ class TeleprompterActivity : Activity() {
                 handler.removeCallbacks(hideControlsRunnable)
                 return true
             }
+
             MotionEvent.ACTION_MOVE -> {
                 val delta = downY - event.y
                 if (kotlin.math.abs(delta) > DRAG_THRESHOLD_PX) {
@@ -164,6 +306,7 @@ class TeleprompterActivity : Activity() {
                 }
                 return true
             }
+
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (!dragging) {
                     paused = !paused
@@ -259,8 +402,195 @@ class TeleprompterActivity : Activity() {
 
     private fun applyColors(textColor: Int, backgroundColor: Int) {
         prompterText.setTextColor(textColor)
-        findViewById<View>(R.id.root).setBackgroundColor(backgroundColor)
-        scrollView.setBackgroundColor(backgroundColor)
+        val promptBg = if (cameraEnabled) withAlpha(backgroundColor, overlayAlpha) else backgroundColor
+        findViewById<View>(R.id.root).setBackgroundColor(promptBg)
+        scrollView.setBackgroundColor(promptBg)
+    }
+
+    private fun withAlpha(color: Int, alpha: Int): Int =
+        Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color))
+
+    private fun ensureCameraPermissionsAndStart() {
+        val pendingPermissions = CAMERA_PERMISSIONS.filter {
+            ContextCompat.checkSelfPermission(this, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+        if (pendingPermissions.isEmpty()) {
+            startCameraPreview()
+        } else {
+            permissionsLauncher.launch(pendingPermissions.toTypedArray())
+        }
+    }
+
+    @OptIn(ExperimentalCamera2Interop::class)
+    private fun startCameraPreview() {
+        val future = ProcessCameraProvider.getInstance(this)
+        future.addListener({
+            val provider = future.get()
+            cameraProvider = provider
+            val preview = Preview.Builder().build().also {
+                it.surfaceProvider = previewView.surfaceProvider
+            }
+            val recorder = Recorder.Builder()
+                .setQualitySelector(QualitySelector.from(selectedQuality))
+                .build()
+            videoCapture = VideoCapture.withOutput(recorder)
+            val selector = CameraSelector.Builder()
+                .requireLensFacing(lensFacing)
+                .build()
+            try {
+                provider.unbindAll()
+                val camera = provider.bindToLifecycle(this, selector, preview, videoCapture)
+                val targetRange = Range(selectedFps, selectedFps)
+                Camera2CameraControl.from(camera.cameraControl).setCaptureRequestOptions(
+                    CaptureRequestOptions.Builder()
+                        .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, targetRange)
+                        .build()
+                )
+                cameraEnabled = true
+                applyColors(script?.textColor ?: Color.WHITE, script?.backgroundColor ?: Color.BLACK)
+                updateCameraButtons()
+                playStateText.text = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
+                    "前置摄像头已开启（${qualityLabel()} / ${selectedFps}fps）。"
+                } else {
+                    "后置摄像头已开启（${qualityLabel()} / ${selectedFps}fps）。"
+                }
+            } catch (_: Exception) {
+                cameraEnabled = false
+                updateCameraButtons()
+                playStateText.text = "摄像头启动失败，请检查设备是否占用摄像头。"
+            }
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun disableCameraPreview() {
+        stopRecordingIfNeeded()
+        cameraProvider?.unbindAll()
+        cameraEnabled = false
+        previewView.visibility = View.GONE
+        applyColors(script?.textColor ?: Color.WHITE, script?.backgroundColor ?: Color.BLACK)
+        updateCameraButtons()
+    }
+
+    private fun startRecording() {
+        if (!cameraEnabled) {
+            ensureCameraPermissionsAndStart()
+            playStateText.text = "请先开启摄像头预览，再开始录制。"
+            return
+        }
+        val capture = videoCapture ?: return
+        val outputDir = File(getExternalFilesDir(Environment.DIRECTORY_MOVIES), "Teleprompter")
+        if (!outputDir.exists()) outputDir.mkdirs()
+        val file = File(outputDir, "VID_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp4")
+        val options = FileOutputOptions.Builder(file).build()
+        val pending: PendingRecording = capture.output.prepareRecording(this, options)
+        val hasAudio = ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (hasAudio) {
+            pending.withAudioEnabled()
+        }
+        recording = pending.start(ContextCompat.getMainExecutor(this)) { event ->
+            when (event) {
+                is VideoRecordEvent.Start -> {
+                    recordingStartMs = System.currentTimeMillis()
+                    timerText.visibility = View.VISIBLE
+                    handler.post(recordingTicker)
+                    playStateText.text = "正在录制：${file.name}"
+                    updateCameraButtons()
+                }
+
+                is VideoRecordEvent.Finalize -> {
+                    recording = null
+                    handler.removeCallbacks(recordingTicker)
+                    timerText.visibility = View.GONE
+                    updateCameraButtons()
+                    playStateText.text = if (event.hasError()) {
+                        "录制失败，请重试。"
+                    } else {
+                        "录制完成：${file.absolutePath}"
+                    }
+                }
+            }
+        }
+    }
+
+    private fun stopRecordingIfNeeded() {
+        recording?.stop()
+        recording = null
+        handler.removeCallbacks(recordingTicker)
+        timerText.visibility = View.GONE
+        updateCameraButtons()
+    }
+
+    private fun launchSystemCamera() {
+        val intent = Intent(android.provider.MediaStore.ACTION_VIDEO_CAPTURE).apply {
+            putExtra(android.provider.MediaStore.EXTRA_VIDEO_QUALITY, 1)
+        }
+        if (intent.resolveActivity(packageManager) != null) {
+            systemCameraLauncher.launch(intent)
+        } else {
+            playStateText.text = "当前设备没有可用的系统录像应用。"
+        }
+    }
+
+    private fun updateCameraButtons() {
+        previewView.visibility = if (cameraEnabled) View.VISIBLE else View.GONE
+        cameraToggleButton.text = if (cameraEnabled) "关摄像头" else "开摄像头"
+        lensSwitchButton.text = if (lensFacing == CameraSelector.LENS_FACING_FRONT) "切后置" else "切前置"
+        lensSwitchButton.isEnabled = cameraEnabled
+        recordButton.text = if (recording == null) "开始录制" else "停止录制"
+        recordButton.isEnabled = cameraEnabled
+        qualityButton.text = "画质/FPS：${qualityLabel()} ${selectedFps}fps"
+    }
+
+    private fun updateAlphaLabel() {
+        alphaLabel.text = "提词遮罩透明度：${overlayAlpha}/255"
+    }
+
+    private fun qualityLabel(): String = when (selectedQuality) {
+        Quality.UHD -> "2160p"
+        Quality.FHD -> "1080p"
+        Quality.HD -> "720p"
+        else -> "480p"
+    }
+
+    private fun updateRecordingTimer() {
+        val elapsedSec = ((System.currentTimeMillis() - recordingStartMs) / 1000L).coerceAtLeast(0L)
+        val mm = (elapsedSec / 60).toString().padStart(2, '0')
+        val ss = (elapsedSec % 60).toString().padStart(2, '0')
+        timerText.text = "REC $mm:$ss"
+    }
+
+    private fun showVideoOptionsDialog() {
+        val qualityItems = arrayOf("2160p", "1080p", "720p", "480p")
+        val qualityValues = arrayOf(Quality.UHD, Quality.FHD, Quality.HD, Quality.SD)
+        val qualityIndex = qualityValues.indexOf(selectedQuality).coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle("选择录制分辨率")
+            .setSingleChoiceItems(qualityItems, qualityIndex) { dialog, which ->
+                selectedQuality = qualityValues[which]
+                dialog.dismiss()
+                showFpsOptionsDialog()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showFpsOptionsDialog() {
+        val fpsItems = arrayOf("24 fps", "30 fps", "60 fps（设备支持时生效）")
+        val fpsValues = arrayOf(24, 30, 60)
+        val currentIndex = fpsValues.indexOf(selectedFps).coerceAtLeast(1)
+        AlertDialog.Builder(this)
+            .setTitle("选择目标帧率")
+            .setSingleChoiceItems(fpsItems, currentIndex) { dialog, which ->
+                selectedFps = fpsValues[which]
+                updateCameraButtons()
+                if (cameraEnabled) {
+                    startCameraPreview()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun enterFullScreen() {
@@ -298,5 +628,12 @@ class TeleprompterActivity : Activity() {
         private const val FRAME_MS = 16L
         private const val CONTROLS_HIDE_DELAY_MS = 3500L
         private const val DRAG_THRESHOLD_PX = 8
+        private const val DEFAULT_OVERLAY_ALPHA = 112
+        private const val MIN_OVERLAY_ALPHA = 48
+        private const val MAX_OVERLAY_ALPHA = 220
+        private val CAMERA_PERMISSIONS = arrayOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.RECORD_AUDIO
+        )
     }
 }
