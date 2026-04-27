@@ -53,6 +53,7 @@ class TeleprompterActivity : ComponentActivity() {
     private lateinit var playStateText: TextView
     private lateinit var speedLabel: TextView
     private lateinit var fontLabel: TextView
+    private lateinit var cameraStatusText: TextView
     private lateinit var speedSeek: SeekBar
     private lateinit var fontSeek: SeekBar
     private lateinit var playPauseButton: Button
@@ -93,7 +94,7 @@ class TeleprompterActivity : ComponentActivity() {
         if (allGranted) {
             startCameraPreview()
         } else {
-            playStateText.text = "未获得摄像头/麦克风权限，无法录制。"
+            setStatus("未获得摄像头/麦克风权限，无法录制。")
             showControls()
             updateCameraButtons()
         }
@@ -103,11 +104,11 @@ class TeleprompterActivity : ComponentActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val ok = result.resultCode == RESULT_OK
-        playStateText.text = if (ok) {
+        setStatus(if (ok) {
             "系统相机已完成录制，已返回提词页面。"
         } else {
             "系统相机已取消录制。"
-        }
+        })
         showControls()
     }
 
@@ -167,6 +168,7 @@ class TeleprompterActivity : ComponentActivity() {
         playStateText = findViewById(R.id.playStateText)
         speedLabel = findViewById(R.id.playSpeedLabel)
         fontLabel = findViewById(R.id.playFontLabel)
+        cameraStatusText = findViewById(R.id.cameraStatusText)
         speedSeek = findViewById(R.id.playSpeedSeek)
         fontSeek = findViewById(R.id.playFontSeek)
         playPauseButton = findViewById(R.id.playPauseButton)
@@ -209,6 +211,7 @@ class TeleprompterActivity : ComponentActivity() {
         updateCameraButtons()
         alphaSeek.progress = overlayAlpha - MIN_OVERLAY_ALPHA
         updateAlphaLabel()
+        setStatus("App 内录制：开摄像头后可边录边全屏提词。")
     }
 
     private fun setupControls() {
@@ -233,7 +236,7 @@ class TeleprompterActivity : ComponentActivity() {
         cameraToggleButton.setOnClickListener {
             if (cameraEnabled) {
                 disableCameraPreview()
-                playStateText.text = "摄像头已关闭，提词继续全屏。"
+                setStatus("摄像头已关闭，提词继续全屏。")
             } else {
                 ensureCameraPermissionsAndStart()
             }
@@ -260,16 +263,16 @@ class TeleprompterActivity : ComponentActivity() {
         }
         previewVisibilityButton.setOnClickListener {
             if (!cameraEnabled) {
-                playStateText.text = "请先开启 App 内摄像头，再隐藏或显示录制画面。"
+                setStatus("请先开启 App 内摄像头，再隐藏或显示录制画面。")
             } else {
                 previewHidden = !previewHidden
                 updateCameraPreviewVisibility()
                 applyColors(script?.textColor ?: Color.WHITE, script?.backgroundColor ?: Color.BLACK)
-                playStateText.text = if (previewHidden) {
+                setStatus(if (previewHidden) {
                     "录制画面已隐藏，提词器保持全屏显示；录制不会停止。"
                 } else {
                     "录制画面已显示，提词器以半透明遮罩覆盖。"
-                }
+                })
             }
             showControls()
         }
@@ -372,6 +375,11 @@ class TeleprompterActivity : ComponentActivity() {
         playPauseButton.text = if (paused) "继续" else "暂停"
         speedLabel.text = "滚动速度：${currentSpeed()}"
         fontLabel.text = "字体大小：${currentFontSize()}sp"
+    }
+
+    private fun setStatus(message: String) {
+        cameraStatusText.text = message
+        playStateText.text = message
     }
 
     private fun saveSettings() {
@@ -481,15 +489,15 @@ class TeleprompterActivity : ComponentActivity() {
                 } else {
                     "后置摄像头"
                 }
-                playStateText.text = if (fpsApplied) {
+                setStatus(if (fpsApplied) {
                     "$lensLabel 已开启（${qualityLabel()} / ${selectedFps}fps）。"
                 } else {
                     "$lensLabel 已开启（${qualityLabel()}，当前设备可能不支持 ${selectedFps}fps 强制设置）。"
-                }
+                })
             } catch (_: Exception) {
                 cameraEnabled = false
                 updateCameraButtons()
-                playStateText.text = "摄像头启动失败，请检查设备是否占用摄像头。"
+                setStatus("摄像头启动失败，请检查设备是否占用摄像头。")
             }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -508,7 +516,7 @@ class TeleprompterActivity : ComponentActivity() {
     private fun startRecording() {
         if (!cameraEnabled) {
             ensureCameraPermissionsAndStart()
-            playStateText.text = "请先开启摄像头预览，再开始录制。"
+            setStatus("请先开启摄像头预览，再开始录制。")
             return
         }
         val capture = videoCapture ?: return
@@ -528,7 +536,7 @@ class TeleprompterActivity : ComponentActivity() {
                     recordingStartMs = System.currentTimeMillis()
                     timerText.visibility = View.VISIBLE
                     handler.post(recordingTicker)
-                    playStateText.text = "正在录制：${file.name}"
+                    setStatus("正在录制：${file.name}")
                     updateCameraButtons()
                 }
 
@@ -537,11 +545,11 @@ class TeleprompterActivity : ComponentActivity() {
                     handler.removeCallbacks(recordingTicker)
                     timerText.visibility = View.GONE
                     updateCameraButtons()
-                    playStateText.text = if (event.hasError()) {
+                    setStatus(if (event.hasError()) {
                         "录制失败，请重试。"
                     } else {
                         "录制完成：${file.absolutePath}"
-                    }
+                    })
                 }
             }
         }
@@ -560,10 +568,10 @@ class TeleprompterActivity : ComponentActivity() {
             putExtra(android.provider.MediaStore.EXTRA_VIDEO_QUALITY, 1)
         }
         if (intent.resolveActivity(packageManager) != null) {
-            playStateText.text = "将打开系统相机。系统相机模式下，提词器不能覆盖在相机 App 上。"
+            setStatus("将打开系统相机。系统相机模式下，提词器不能覆盖在相机 App 上。")
             systemCameraLauncher.launch(intent)
         } else {
-            playStateText.text = "当前设备没有可用的系统录像应用。"
+            setStatus("当前设备没有可用的系统录像应用。")
         }
     }
 
@@ -576,7 +584,7 @@ class TeleprompterActivity : ComponentActivity() {
         recordButton.isEnabled = cameraEnabled
         previewVisibilityButton.text = if (previewHidden) "显示录制画面" else "隐藏录制画面"
         previewVisibilityButton.isEnabled = cameraEnabled
-        qualityButton.text = "画质/FPS：${qualityLabel()} ${selectedFps}fps"
+        qualityButton.text = "画质：${qualityLabel()}/${selectedFps}fps"
     }
 
     private fun updateCameraPreviewVisibility() {
