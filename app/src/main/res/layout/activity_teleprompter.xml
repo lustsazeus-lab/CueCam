@@ -105,7 +105,8 @@
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:background="@drawable/glass_button_background"
-                android:text="暂停" />
+                android:text="暂停"
+                android:textColor="#FFFFFF" />
 
             <Space
                 android:layout_width="10dp"
@@ -117,7 +118,8 @@
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:background="@drawable/glass_button_background"
-                android:text="颜色" />
+                android:text="颜色"
+                android:textColor="#FFFFFF" />
 
             <Space
                 android:layout_width="10dp"
@@ -129,7 +131,8 @@
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:background="@drawable/glass_button_background"
-                android:text="退出" />
+                android:text="退出"
+                android:textColor="#FFFFFF" />
         </LinearLayout>
 
         <LinearLayout
@@ -145,7 +148,8 @@
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:background="@drawable/glass_button_background"
-                android:text="开摄像头" />
+                android:text="开摄像头"
+                android:textColor="#FFFFFF" />
 
             <Space
                 android:layout_width="10dp"
@@ -157,7 +161,8 @@
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:background="@drawable/glass_button_background"
-                android:text="切后置" />
+                android:text="切后置"
+                android:textColor="#FFFFFF" />
 
             <Space
                 android:layout_width="10dp"
@@ -169,7 +174,38 @@
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:background="@drawable/glass_button_background"
-                android:text="开始录制" />
+                android:text="开始录制"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/previewVisibilityButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_button_background"
+                android:text="隐藏录制画面"
+                android:textColor="#FFFFFF" />
+
+            <Space
+                android:layout_width="10dp"
+                android:layout_height="1dp" />
+
+            <Button
+                android:id="@+id/systemCameraButton"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/glass_button_background"
+                android:text="系统相机"
+                android:textColor="#FFFFFF" />
         </LinearLayout>
 
         <TextView
@@ -192,14 +228,8 @@
             android:layout_height="44dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/glass_button_background"
-            android:text="画质/FPS：1080p 30fps" />
+            android:text="画质/FPS：1080p 30fps"
+            android:textColor="#FFFFFF" />
 
-        <Button
-            android:id="@+id/systemCameraButton"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/glass_button_background"
-            android:text="调用系统相机录像" />
     </LinearLayout>
 </FrameLayout>
