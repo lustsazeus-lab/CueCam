@@ -171,9 +171,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showDisplaySettings() {
-        val choices = arrayOf("字体颜色", "背景颜色")
+        val choices = arrayOf(getString(R.string.text_color), getString(R.string.background_color))
         AlertDialog.Builder(this)
-            .setTitle("显示设置")
+            .setTitle(R.string.display_settings)
             .setItems(choices) { _, which ->
                 if (which == 0) {
                     ColorPalette.showTextColorPicker(this, textColor) { selected ->
@@ -189,14 +189,14 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
     private fun startPrompting() {
         val content = contentEdit.text.toString()
         if (content.isBlank()) {
-            statusText.text = "请先输入或粘贴稿件内容。"
+            statusText.text = getString(R.string.enter_script_first)
             return
         }
         val saved = saveCurrentScript() ?: return
@@ -207,8 +207,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateLabels() {
-        speedLabel.text = "滚动速度：${currentSpeed()}"
-        fontLabel.text = "字体大小：${currentFontSize()}sp"
+        speedLabel.text = getString(R.string.speed_label, currentSpeed())
+        fontLabel.text = getString(R.string.font_label, currentFontSize())
     }
 
     private fun applyColorPreview() {
@@ -219,15 +219,15 @@ class MainActivity : ComponentActivity() {
     private fun updateStartState() {
         startButton.isEnabled = contentEdit.text.toString().isNotBlank()
         if (!startButton.isEnabled) {
-            statusText.text = "粘贴或输入稿件后即可开始。"
+            statusText.text = getString(R.string.paste_to_start)
         }
     }
 
     private fun showSavedStatus(updatedAt: Long) {
         if (contentEdit.text.toString().isBlank()) {
-            statusText.text = "粘贴或输入稿件后即可开始。"
+            statusText.text = getString(R.string.paste_to_start)
         } else {
-            statusText.text = "已自动保存"
+            statusText.text = getString(R.string.saved)
         }
     }
 

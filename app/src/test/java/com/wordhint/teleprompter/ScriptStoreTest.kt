@@ -76,6 +76,6 @@ class ScriptStoreTest {
     @Test
     fun recordingOutputUsesStableMediaLibraryName() {
         assertTrue(RecordingOutput.displayName(Date(0L)).matches(Regex("VID_\\d{8}_\\d{6}\\.mp4")))
-        assertEquals("Movies/提词助手", RecordingOutput.relativePath("Movies"))
+        assertEquals("Movies/CueCam", RecordingOutput.relativePath("Movies"))
     }
 }

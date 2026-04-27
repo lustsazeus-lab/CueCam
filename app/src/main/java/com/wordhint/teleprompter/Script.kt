@@ -41,7 +41,7 @@ object ScriptSettings {
 
 object ScriptTitles {
     private const val MAX_TITLE_LENGTH = 28
-    private const val FALLBACK_TITLE = "未命名稿件"
+    const val FALLBACK_TITLE = "Untitled script"
 
     fun fromContent(content: String): String {
         val firstLine = content

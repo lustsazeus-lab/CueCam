@@ -35,7 +35,7 @@ class ScriptRepository(context: Context) {
     fun createDraft(): Script =
         Script(
             id = UUID.randomUUID().toString(),
-            title = "未命名稿件",
+            title = ScriptTitles.FALLBACK_TITLE,
             content = "",
             updatedAt = System.currentTimeMillis()
         )

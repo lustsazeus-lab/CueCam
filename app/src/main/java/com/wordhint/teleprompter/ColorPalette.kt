@@ -12,33 +12,33 @@ import android.widget.TextView
 
 object ColorPalette {
     private val textColors = listOf(
-        ColorOption("白色", Color.WHITE),
-        ColorOption("暖白", 0xFFFFF2D8.toInt()),
-        ColorOption("浅黄", 0xFFFFE878.toInt()),
-        ColorOption("薄荷", 0xFFB9FBC0.toInt()),
-        ColorOption("天蓝", 0xFFA9DEF9.toInt()),
-        ColorOption("粉色", 0xFFFFC8DD.toInt()),
-        ColorOption("黑色", Color.BLACK),
-        ColorOption("深灰", 0xFF303030.toInt())
+        ColorOption(R.string.white, Color.WHITE),
+        ColorOption(R.string.warm_white, 0xFFFFF2D8.toInt()),
+        ColorOption(R.string.soft_yellow, 0xFFFFE878.toInt()),
+        ColorOption(R.string.mint, 0xFFB9FBC0.toInt()),
+        ColorOption(R.string.sky_blue, 0xFFA9DEF9.toInt()),
+        ColorOption(R.string.pink, 0xFFFFC8DD.toInt()),
+        ColorOption(R.string.black, Color.BLACK),
+        ColorOption(R.string.dark_gray, 0xFF303030.toInt())
     )
 
     private val backgroundColors = listOf(
-        ColorOption("黑色", Color.BLACK),
-        ColorOption("深灰", 0xFF111827.toInt()),
-        ColorOption("墨绿", 0xFF10251C.toInt()),
-        ColorOption("深蓝", 0xFF101A33.toInt()),
-        ColorOption("咖啡", 0xFF2A1E17.toInt()),
-        ColorOption("暖米", 0xFFFFF9F2.toInt()),
-        ColorOption("白色", Color.WHITE),
-        ColorOption("浅黄", 0xFFFFF3B0.toInt())
+        ColorOption(R.string.black, Color.BLACK),
+        ColorOption(R.string.dark_gray, 0xFF111827.toInt()),
+        ColorOption(R.string.deep_green, 0xFF10251C.toInt()),
+        ColorOption(R.string.deep_blue, 0xFF101A33.toInt()),
+        ColorOption(R.string.coffee, 0xFF2A1E17.toInt()),
+        ColorOption(R.string.warm_cream, 0xFFFFF9F2.toInt()),
+        ColorOption(R.string.white, Color.WHITE),
+        ColorOption(R.string.soft_yellow, 0xFFFFF3B0.toInt())
     )
 
     fun showTextColorPicker(context: Context, selectedColor: Int, onSelected: (Int) -> Unit) {
-        showPicker(context, "字体颜色", textColors, selectedColor, onSelected)
+        showPicker(context, context.getString(R.string.text_color), textColors, selectedColor, onSelected)
     }
 
     fun showBackgroundColorPicker(context: Context, selectedColor: Int, onSelected: (Int) -> Unit) {
-        showPicker(context, "背景颜色", backgroundColors, selectedColor, onSelected)
+        showPicker(context, context.getString(R.string.background_color), backgroundColors, selectedColor, onSelected)
     }
 
     private fun showPicker(
@@ -56,7 +56,7 @@ object ColorPalette {
         val dialog = AlertDialog.Builder(context)
             .setTitle(title)
             .setView(grid)
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.cancel, null)
             .create()
 
         options.forEach { option ->
@@ -78,7 +78,7 @@ object ColorPalette {
             )
             item.addView(
                 TextView(context).apply {
-                    text = option.label
+                    text = context.getString(option.labelRes)
                     textSize = 12f
                     gravity = Gravity.CENTER
                     setTextColor(0xFF333333.toInt())
@@ -102,5 +102,5 @@ object ColorPalette {
     private fun Int.dp(context: Context): Int =
         (this * context.resources.displayMetrics.density).toInt()
 
-    private data class ColorOption(val label: String, val color: Int)
+    private data class ColorOption(val labelRes: Int, val color: Int)
 }

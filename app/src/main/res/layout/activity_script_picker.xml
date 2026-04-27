@@ -16,7 +16,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="稿件"
+            android:text="@string/scripts_title"
             android:textColor="#F8FAFC"
             android:textSize="26sp"
             android:textStyle="bold" />
@@ -26,7 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="42dp"
             android:background="@drawable/glass_button_background"
-            android:text="新建"
+            android:text="@string/new_script"
             android:textColor="#FFFFFF" />
 
         <Space
@@ -38,7 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="42dp"
             android:background="@drawable/glass_button_background"
-            android:text="关闭"
+            android:text="@string/close"
             android:textColor="#FFFFFF" />
     </LinearLayout>
 
@@ -46,7 +46,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="选择一个稿件继续编辑或开始提词"
+        android:text="@string/picker_subtitle"
         android:textColor="#94A3B8"
         android:textSize="13sp" />
 
@@ -56,7 +56,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="28dp"
         android:gravity="center"
-        android:text="还没有稿件，点击“新建”开始。"
+        android:text="@string/picker_empty"
         android:textColor="#CBD5E1"
         android:textSize="15sp"
         android:visibility="gone" />

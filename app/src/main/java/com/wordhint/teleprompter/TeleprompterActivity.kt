@@ -92,7 +92,7 @@ class TeleprompterActivity : ComponentActivity() {
         if (allGranted) {
             startCameraPreview()
         } else {
-            setStatus("未获得摄像头/麦克风权限，无法录制。")
+            setStatus(getString(R.string.no_camera_permissions))
             showControls()
             updateCameraButtons()
         }
@@ -103,9 +103,9 @@ class TeleprompterActivity : ComponentActivity() {
     ) { result ->
         val ok = result.resultCode == RESULT_OK
         setStatus(if (ok) {
-            "系统相机已完成录制，已返回提词页面。"
+            getString(R.string.system_camera_done)
         } else {
-            "系统相机已取消录制。"
+            getString(R.string.system_camera_cancelled)
         })
         showControls()
     }
@@ -209,7 +209,7 @@ class TeleprompterActivity : ComponentActivity() {
         updateCameraButtons()
         alphaSeek.progress = overlayAlpha - MIN_OVERLAY_ALPHA
         updateAlphaLabel()
-        setStatus("App 内录制：开摄像头后可边录边全屏提词。")
+        setStatus(getString(R.string.recording_status_initial))
     }
 
     private fun setupControls() {
@@ -234,7 +234,7 @@ class TeleprompterActivity : ComponentActivity() {
         cameraToggleButton.setOnClickListener {
             if (cameraEnabled) {
                 disableCameraPreview()
-                setStatus("摄像头已关闭，提词继续全屏。")
+                setStatus(getString(R.string.camera_closed))
             } else {
                 ensureCameraPermissionsAndStart()
             }
@@ -261,15 +261,15 @@ class TeleprompterActivity : ComponentActivity() {
         }
         previewVisibilityButton.setOnClickListener {
             if (!cameraEnabled) {
-                setStatus("请先开启 App 内摄像头，再隐藏或显示录制画面。")
+                setStatus(getString(R.string.enable_camera_first_preview))
             } else {
                 previewHidden = !previewHidden
                 updateCameraPreviewVisibility()
                 applyColors(script?.textColor ?: Color.WHITE, script?.backgroundColor ?: Color.BLACK)
                 setStatus(if (previewHidden) {
-                    "录制画面已隐藏，提词器保持全屏显示；录制不会停止。"
+                    getString(R.string.preview_hidden_status)
                 } else {
-                    "录制画面已显示，提词器以半透明遮罩覆盖。"
+                    getString(R.string.preview_shown_status)
                 })
             }
             showControls()
@@ -368,11 +368,11 @@ class TeleprompterActivity : ComponentActivity() {
     }
 
     private fun updateControlLabels() {
-        val state = if (paused) "已暂停" else "播放中"
-        playStateText.text = "$state · 点按画面暂停/继续，拖动调整位置"
-        playPauseButton.text = if (paused) "继续" else "暂停"
-        speedLabel.text = "滚动速度：${currentSpeed()}"
-        fontLabel.text = "字体大小：${currentFontSize()}sp"
+        val state = if (paused) getString(R.string.paused) else getString(R.string.playing)
+        playStateText.text = getString(R.string.prompter_control_hint, state)
+        playPauseButton.text = if (paused) getString(R.string.resume) else getString(R.string.pause)
+        speedLabel.text = getString(R.string.speed_label, currentSpeed())
+        fontLabel.text = getString(R.string.font_label, currentFontSize())
     }
 
     private fun setStatus(message: String) {
@@ -391,9 +391,9 @@ class TeleprompterActivity : ComponentActivity() {
     }
 
     private fun showColorSettings() {
-        val choices = arrayOf("字体颜色", "背景颜色")
+        val choices = arrayOf(getString(R.string.text_color), getString(R.string.background_color))
         AlertDialog.Builder(this)
-            .setTitle("颜色设置")
+            .setTitle(R.string.color_settings)
             .setItems(choices) { _, which ->
                 val current = script ?: return@setItems
                 if (which == 0) {
@@ -406,7 +406,7 @@ class TeleprompterActivity : ComponentActivity() {
                     }
                 }
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
         showControls()
     }
@@ -492,19 +492,19 @@ class TeleprompterActivity : ComponentActivity() {
                 applyColors(script?.textColor ?: Color.WHITE, script?.backgroundColor ?: Color.BLACK)
                 updateCameraButtons()
                 val lensLabel = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
-                    "前置摄像头"
+                    getString(R.string.front_camera)
                 } else {
-                    "后置摄像头"
+                    getString(R.string.back_camera)
                 }
                 setStatus(if (fpsApplied) {
-                    "$lensLabel 已开启（${qualityLabel()} / ${selectedFps}fps）。"
+                    getString(R.string.camera_started, lensLabel, qualityLabel(), selectedFps)
                 } else {
-                    "$lensLabel 已开启（${qualityLabel()}，当前设备可能不支持 ${selectedFps}fps 强制设置）。"
+                    getString(R.string.camera_started_fps_maybe, lensLabel, qualityLabel(), selectedFps)
                 })
             } catch (_: Exception) {
                 cameraEnabled = false
                 updateCameraButtons()
-                setStatus("摄像头启动失败，请检查设备是否占用摄像头。")
+                setStatus(getString(R.string.camera_failed))
             }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -523,7 +523,7 @@ class TeleprompterActivity : ComponentActivity() {
     private fun startRecording() {
         if (!cameraEnabled) {
             ensureCameraPermissionsAndStart()
-            setStatus("请先开启摄像头预览，再开始录制。")
+            setStatus(getString(R.string.enable_camera_first_record))
             return
         }
         val capture = videoCapture ?: return
@@ -541,7 +541,7 @@ class TeleprompterActivity : ComponentActivity() {
                     recordingStartMs = System.currentTimeMillis()
                     timerText.visibility = View.VISIBLE
                     handler.post(recordingTicker)
-                    setStatus("正在录制：$displayName")
+                    setStatus(getString(R.string.recording_now, displayName))
                     updateCameraButtons()
                 }
 
@@ -551,9 +551,9 @@ class TeleprompterActivity : ComponentActivity() {
                     timerText.visibility = View.GONE
                     updateCameraButtons()
                     setStatus(if (event.hasError()) {
-                        "录制失败，请重试。"
+                        getString(R.string.recording_failed)
                     } else {
-                        "录制完成：已保存到系统视频/Movies/提词助手"
+                        getString(R.string.recording_saved)
                     })
                 }
             }
@@ -593,23 +593,27 @@ class TeleprompterActivity : ComponentActivity() {
             putExtra(android.provider.MediaStore.EXTRA_VIDEO_QUALITY, 1)
         }
         if (intent.resolveActivity(packageManager) != null) {
-            setStatus("将打开系统相机。系统相机模式下，提词器不能覆盖在相机 App 上。")
+            setStatus(getString(R.string.system_camera_launch))
             systemCameraLauncher.launch(intent)
         } else {
-            setStatus("当前设备没有可用的系统录像应用。")
+            setStatus(getString(R.string.no_system_camera))
         }
     }
 
     private fun updateCameraButtons() {
         updateCameraPreviewVisibility()
-        cameraToggleButton.text = if (cameraEnabled) "关摄像头" else "开摄像头"
-        lensSwitchButton.text = if (lensFacing == CameraSelector.LENS_FACING_FRONT) "切后置" else "切前置"
+        cameraToggleButton.text = if (cameraEnabled) getString(R.string.close_camera) else getString(R.string.open_camera)
+        lensSwitchButton.text = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
+            getString(R.string.switch_back)
+        } else {
+            getString(R.string.switch_front)
+        }
         lensSwitchButton.isEnabled = cameraEnabled
-        recordButton.text = if (recording == null) "开始录制" else "停止录制"
+        recordButton.text = if (recording == null) getString(R.string.start_recording) else getString(R.string.stop_recording)
         recordButton.isEnabled = cameraEnabled
-        previewVisibilityButton.text = if (previewHidden) "显示录制画面" else "隐藏录制画面"
+        previewVisibilityButton.text = if (previewHidden) getString(R.string.show_preview) else getString(R.string.hide_preview)
         previewVisibilityButton.isEnabled = cameraEnabled
-        qualityButton.text = "画质：${qualityLabel()}/${selectedFps}fps"
+        qualityButton.text = getString(R.string.quality_button, qualityLabel(), selectedFps)
     }
 
     private fun updateCameraPreviewVisibility() {
@@ -618,7 +622,7 @@ class TeleprompterActivity : ComponentActivity() {
     }
 
     private fun updateAlphaLabel() {
-        alphaLabel.text = "提词遮罩透明度：${overlayAlpha}/255"
+        alphaLabel.text = getString(R.string.overlay_alpha_label, overlayAlpha)
     }
 
     private fun qualityLabel(): String = when (selectedQuality) {
@@ -640,22 +644,22 @@ class TeleprompterActivity : ComponentActivity() {
         val qualityValues = arrayOf(Quality.UHD, Quality.FHD, Quality.HD, Quality.SD)
         val qualityIndex = qualityValues.indexOf(selectedQuality).coerceAtLeast(0)
         AlertDialog.Builder(this)
-            .setTitle("选择录制分辨率")
+            .setTitle(R.string.choose_resolution)
             .setSingleChoiceItems(qualityItems, qualityIndex) { dialog, which ->
                 selectedQuality = qualityValues[which]
                 dialog.dismiss()
                 showFpsOptionsDialog()
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
     private fun showFpsOptionsDialog() {
-        val fpsItems = arrayOf("24 fps", "30 fps", "60 fps（设备支持时生效）")
+        val fpsItems = arrayOf("24 fps", "30 fps", getString(R.string.fps_60_maybe))
         val fpsValues = arrayOf(24, 30, 60)
         val currentIndex = fpsValues.indexOf(selectedFps).coerceAtLeast(1)
         AlertDialog.Builder(this)
-            .setTitle("选择目标帧率")
+            .setTitle(R.string.choose_fps)
             .setSingleChoiceItems(fpsItems, currentIndex) { dialog, which ->
                 selectedFps = fpsValues[which]
                 updateCameraButtons()
@@ -664,7 +668,7 @@ class TeleprompterActivity : ComponentActivity() {
                 }
                 dialog.dismiss()
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 

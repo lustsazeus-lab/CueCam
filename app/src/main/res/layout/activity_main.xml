@@ -25,7 +25,7 @@
             android:id="@+id/displaySettingsButton"
             android:layout_width="wrap_content"
             android:layout_height="44dp"
-            android:text="显示" />
+            android:text="@string/display" />
 
         <Space
             android:layout_width="8dp"
@@ -35,7 +35,7 @@
             android:id="@+id/scriptsButton"
             android:layout_width="wrap_content"
             android:layout_height="44dp"
-            android:text="稿件" />
+            android:text="@string/scripts" />
     </LinearLayout>
 
     <EditText
@@ -44,7 +44,7 @@
         android:layout_height="48dp"
         android:layout_marginTop="14dp"
         android:background="@drawable/input_background"
-        android:hint="稿件标题"
+        android:hint="@string/script_title_hint"
         android:imeOptions="actionDone"
         android:inputType="text"
         android:maxLines="1"
@@ -59,7 +59,7 @@
         android:layout_weight="1"
         android:background="@drawable/input_background"
         android:gravity="top|start"
-        android:hint="粘贴或输入口播稿。支持中文、英文和多语言混排。"
+        android:hint="@string/content_hint"
         android:inputType="textMultiLine|textCapSentences"
         android:minLines="10"
         android:scrollbars="vertical"
@@ -105,7 +105,7 @@
         android:layout_height="40dp"
         android:layout_marginTop="4dp"
         android:gravity="center"
-        android:text="颜色预览：口播提词"
+        android:text="@string/color_preview"
         android:textSize="16sp" />
 
     <RadioGroup
@@ -120,14 +120,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="竖屏" />
+            android:text="@string/portrait" />
 
         <RadioButton
             android:id="@+id/landscapeRadio"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="横屏" />
+            android:text="@string/landscape" />
     </RadioGroup>
 
     <Button
@@ -136,7 +136,7 @@
         android:layout_height="52dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/button_primary"
-        android:text="开始提词"
+        android:text="@string/start_prompting"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
         android:textStyle="bold" />
