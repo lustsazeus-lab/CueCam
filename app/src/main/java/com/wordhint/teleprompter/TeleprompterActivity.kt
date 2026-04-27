@@ -1,6 +1,8 @@
 package com.wordhint.teleprompter
 
+import android.Manifest
 import android.app.AlertDialog
+import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Color
@@ -9,6 +11,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
 import android.util.Range
 import android.view.MotionEvent
 import android.view.View
@@ -28,9 +31,8 @@ import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.FallbackStrategy
-import androidx.camera.video.PendingRecording
+import androidx.camera.video.MediaStoreOutputOptions
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
@@ -40,10 +42,6 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import android.hardware.camera2.CaptureRequest
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class TeleprompterActivity : ComponentActivity() {
     private lateinit var repository: ScriptRepository
@@ -438,7 +436,7 @@ class TeleprompterActivity : ComponentActivity() {
         Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color))
 
     private fun ensureCameraPermissionsAndStart() {
-        val pendingPermissions = CAMERA_PERMISSIONS.filter {
+        val pendingPermissions = requiredRecordingPermissions().filter {
             ContextCompat.checkSelfPermission(this, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
         }
         if (pendingPermissions.isEmpty()) {
@@ -447,6 +445,15 @@ class TeleprompterActivity : ComponentActivity() {
             permissionsLauncher.launch(pendingPermissions.toTypedArray())
         }
     }
+
+    private fun requiredRecordingPermissions(): List<String> =
+        buildList {
+            add(Manifest.permission.CAMERA)
+            add(Manifest.permission.RECORD_AUDIO)
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }
 
     @OptIn(ExperimentalCamera2Interop::class)
     private fun startCameraPreview() {
@@ -520,11 +527,9 @@ class TeleprompterActivity : ComponentActivity() {
             return
         }
         val capture = videoCapture ?: return
-        val outputDir = File(getExternalFilesDir(Environment.DIRECTORY_MOVIES), "Teleprompter")
-        if (!outputDir.exists()) outputDir.mkdirs()
-        val file = File(outputDir, "VID_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp4")
-        val options = FileOutputOptions.Builder(file).build()
-        val pending: PendingRecording = capture.output.prepareRecording(this, options)
+        val displayName = RecordingOutput.displayName()
+        val options = createMediaStoreOutputOptions(displayName)
+        val pending = capture.output.prepareRecording(this, options)
         val hasAudio = ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
         if (hasAudio) {
@@ -536,7 +541,7 @@ class TeleprompterActivity : ComponentActivity() {
                     recordingStartMs = System.currentTimeMillis()
                     timerText.visibility = View.VISIBLE
                     handler.post(recordingTicker)
-                    setStatus("正在录制：${file.name}")
+                    setStatus("正在录制：$displayName")
                     updateCameraButtons()
                 }
 
@@ -548,11 +553,31 @@ class TeleprompterActivity : ComponentActivity() {
                     setStatus(if (event.hasError()) {
                         "录制失败，请重试。"
                     } else {
-                        "录制完成：${file.absolutePath}"
+                        "录制完成：已保存到系统视频/Movies/提词助手"
                     })
                 }
             }
         }
+    }
+
+    private fun createMediaStoreOutputOptions(displayName: String): MediaStoreOutputOptions {
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+            put(MediaStore.MediaColumns.MIME_TYPE, RecordingOutput.MIME_TYPE)
+            put(MediaStore.Video.Media.DATE_TAKEN, System.currentTimeMillis())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    RecordingOutput.relativePath(Environment.DIRECTORY_MOVIES)
+                )
+            }
+        }
+        return MediaStoreOutputOptions.Builder(
+            contentResolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        )
+            .setContentValues(contentValues)
+            .build()
     }
 
     private fun stopRecordingIfNeeded() {
@@ -681,9 +706,5 @@ class TeleprompterActivity : ComponentActivity() {
         private const val DEFAULT_OVERLAY_ALPHA = 112
         private const val MIN_OVERLAY_ALPHA = 48
         private const val MAX_OVERLAY_ALPHA = 220
-        private val CAMERA_PERMISSIONS = arrayOf(
-            android.Manifest.permission.CAMERA,
-            android.Manifest.permission.RECORD_AUDIO
-        )
     }
 }

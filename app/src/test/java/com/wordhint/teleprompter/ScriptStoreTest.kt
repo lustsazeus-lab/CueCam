@@ -3,6 +3,7 @@ package com.wordhint.teleprompter
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import java.util.Date
 
 class ScriptStoreTest {
     @Test
@@ -70,5 +71,11 @@ class ScriptStoreTest {
 
         assertEquals(ScriptSettings.DEFAULT_TEXT_COLOR, decoded.single().textColor)
         assertEquals(ScriptSettings.DEFAULT_BACKGROUND_COLOR, decoded.single().backgroundColor)
+    }
+
+    @Test
+    fun recordingOutputUsesStableMediaLibraryName() {
+        assertTrue(RecordingOutput.displayName(Date(0L)).matches(Regex("VID_\\d{8}_\\d{6}\\.mp4")))
+        assertEquals("Movies/提词助手", RecordingOutput.relativePath("Movies"))
     }
 }
