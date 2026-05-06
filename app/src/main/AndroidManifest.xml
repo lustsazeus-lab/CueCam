@@ -14,8 +14,15 @@
         android:required="false" />
 
     <queries>
+        <package android:name="com.oplus.camera" />
+        <package android:name="com.oppo.camera" />
+        <package android:name="com.coloros.camera" />
+        <package android:name="com.android.camera" />
         <intent>
             <action android:name="android.media.action.VIDEO_CAPTURE" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.VIDEO_CAMERA" />
         </intent>
     </queries>
 

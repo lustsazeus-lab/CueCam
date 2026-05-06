@@ -86,6 +86,7 @@ class TeleprompterActivity : ComponentActivity() {
     private var selectedFps = 30
     private var recordingStartMs = 0L
     private var previewHidden = false
+    private var fullCameraAppLaunched = false
 
     private val permissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -158,6 +159,12 @@ class TeleprompterActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         enterFullScreen()
+        if (fullCameraAppLaunched) {
+            fullCameraAppLaunched = false
+            stopFloatingPrompterOverlay()
+            setStatus(getString(R.string.full_camera_returned))
+            showControls()
+        }
         handler.post(scrollTick)
     }
 
@@ -654,7 +661,9 @@ class TeleprompterActivity : ComponentActivity() {
 
     private fun launchBeautyCameraMode() {
         startFloatingPrompterOverlay()
-        launchSystemCamera()
+        if (!launchOppoFullCameraApp()) {
+            launchSystemVideoCameraApp()
+        }
     }
 
     private fun startFloatingPrompterOverlay() {
@@ -669,12 +678,40 @@ class TeleprompterActivity : ComponentActivity() {
         startService(intent)
     }
 
-    private fun launchSystemCamera() {
+    private fun launchOppoFullCameraApp(): Boolean {
+        for (packageName in OPPO_CAMERA_PACKAGES) {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName) ?: continue
+            return runCatching {
+                fullCameraAppLaunched = true
+                setStatus(getString(R.string.full_camera_launch))
+                startActivity(launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }.isSuccess
+        }
+        return false
+    }
+
+    private fun launchSystemVideoCameraApp() {
+        val intent = Intent(MediaStore.INTENT_ACTION_VIDEO_CAMERA)
+        if (intent.resolveActivity(packageManager) != null) {
+            runCatching {
+                fullCameraAppLaunched = true
+                setStatus(getString(R.string.video_camera_launch_with_overlay))
+                startActivity(intent)
+            }.onFailure {
+                fullCameraAppLaunched = false
+                launchSystemCaptureCamera()
+            }
+        } else {
+            launchSystemCaptureCamera()
+        }
+    }
+
+    private fun launchSystemCaptureCamera() {
         val intent = Intent(android.provider.MediaStore.ACTION_VIDEO_CAPTURE).apply {
             putExtra(android.provider.MediaStore.EXTRA_VIDEO_QUALITY, 1)
         }
         if (intent.resolveActivity(packageManager) != null) {
-            setStatus(getString(R.string.system_camera_launch_with_overlay))
+            setStatus(getString(R.string.capture_camera_launch_with_overlay))
             systemCameraLauncher.launch(intent)
         } else {
             stopFloatingPrompterOverlay()
@@ -806,5 +843,11 @@ class TeleprompterActivity : ComponentActivity() {
         private const val DEFAULT_OVERLAY_ALPHA = 112
         private const val MIN_OVERLAY_ALPHA = 48
         private const val MAX_OVERLAY_ALPHA = 220
+        private val OPPO_CAMERA_PACKAGES = listOf(
+            "com.oplus.camera",
+            "com.oppo.camera",
+            "com.coloros.camera",
+            "com.android.camera"
+        )
     }
 }

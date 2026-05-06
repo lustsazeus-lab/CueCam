@@ -64,6 +64,10 @@
     <string name="recording_saved">录制完成：已保存到系统视频 / Movies / CueCam。</string>
     <string name="system_camera_launch">将打开系统相机，并使用悬浮提词器进行美颜录制。</string>
     <string name="system_camera_launch_with_overlay">正在打开系统相机，并覆盖全屏悬浮提词器。</string>
+    <string name="full_camera_launch">正在打开 OPPO/ColorOS 完整相机，并覆盖悬浮提词器。</string>
+    <string name="video_camera_launch_with_overlay">正在打开设备录像相机，并覆盖悬浮提词器。</string>
+    <string name="capture_camera_launch_with_overlay">正在打开兼容录像相机，并覆盖悬浮提词器。</string>
+    <string name="full_camera_returned">已返回 CueCam，悬浮提词器已关闭。</string>
     <string name="overlay_permission_required">请允许“显示在其他应用上层”，CueCam 才能在系统相机上显示提词。</string>
     <string name="overlay_permission_title">开启悬浮提词权限</string>
     <string name="overlay_permission_message">美颜相机模式需要“显示在其他应用上层”权限。CueCam 只用这个权限把提词字幕显示在系统相机上方，这样你可以使用手机自带相机的美颜、前后摄和相机设置，同时继续看稿。&#10;&#10;点击“去开启”，在系统设置里允许 CueCam 显示在其他应用上层，然后返回 CueCam 再点一次“美颜相机”。</string>

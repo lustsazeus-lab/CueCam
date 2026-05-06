@@ -64,6 +64,10 @@
     <string name="recording_saved">Saved to system Videos / Movies / CueCam.</string>
     <string name="system_camera_launch">Opening system camera. Use the floating prompter for beauty recording.</string>
     <string name="system_camera_launch_with_overlay">Opening system camera with fullscreen floating prompter.</string>
+    <string name="full_camera_launch">Opening the full OPPO/ColorOS camera app with floating prompter.</string>
+    <string name="video_camera_launch_with_overlay">Opening the device video camera with floating prompter.</string>
+    <string name="capture_camera_launch_with_overlay">Opening the compatible video capture camera with floating prompter.</string>
+    <string name="full_camera_returned">Returned from camera. Floating prompter closed.</string>
     <string name="overlay_permission_required">Allow display over other apps, then CueCam can show prompts over the system camera.</string>
     <string name="overlay_permission_title">Enable floating prompter permission</string>
     <string name="overlay_permission_message">Beauty Camera mode needs the Display over other apps permission. CueCam uses it only to show your teleprompter text above the system camera, so you can use the phone camera\'s beauty filters while reading the script.&#10;&#10;Tap Go to settings, enable Display over other apps for CueCam, then return to CueCam and tap Beauty Camera again.</string>
