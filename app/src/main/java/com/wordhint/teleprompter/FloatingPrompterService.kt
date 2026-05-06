@@ -51,11 +51,18 @@ class FloatingPrompterService : Service() {
     private var backgroundAlpha = DEFAULT_BACKGROUND_ALPHA
     private var textAlpha = DEFAULT_TEXT_ALPHA
     private var touchThrough = false
+    private var controlsHiddenOnDown = false
 
     private val scrollTick = object : Runnable {
         override fun run() {
             if (!paused) scrollBySpeed()
             handler.postDelayed(this, FRAME_MS)
+        }
+    }
+
+    private val hideControlsRunnable = Runnable {
+        if (!touchThrough && ::controls.isInitialized) {
+            controls.visibility = View.GONE
         }
     }
 
@@ -86,11 +93,13 @@ class FloatingPrompterService : Service() {
         if (!::overlayRoot.isInitialized) {
             createOverlay(content)
             windowManager.addView(overlayRoot, windowParams)
+            showControls()
             handler.post(scrollTick)
         } else {
             textView.text = content
             applyDisplay()
             updateLabels()
+            showControls()
         }
         return START_STICKY
     }
@@ -241,7 +250,10 @@ class FloatingPrompterService : Service() {
             this.text = text
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(150, 255, 255, 255))
-            setOnClickListener { onClick() }
+            setOnClickListener {
+                showControls()
+                onClick()
+            }
         }
 
     private fun seekBar(min: Int, max: Int, value: Int, onChange: (Int) -> Unit): SeekBar =
@@ -252,10 +264,16 @@ class FloatingPrompterService : Service() {
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     onChange(progress)
+                    if (fromUser) showControls()
                 }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    showControls()
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    showControls()
+                }
             })
         }
 
@@ -286,6 +304,8 @@ class FloatingPrompterService : Service() {
                 downY = event.y
                 downScrollY = scrollView.scrollY
                 dragging = false
+                controlsHiddenOnDown = ::controls.isInitialized && controls.visibility != View.VISIBLE
+                showControls()
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
@@ -300,9 +320,10 @@ class FloatingPrompterService : Service() {
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                if (!dragging) paused = !paused
+                if (!dragging && !controlsHiddenOnDown) paused = !paused
                 updateLabels()
                 showControls()
+                controlsHiddenOnDown = false
                 return true
             }
         }
@@ -334,6 +355,7 @@ class FloatingPrompterService : Service() {
         paused = false
         updateWindowTouchMode()
         setStatus(getString(R.string.floating_touch_camera_status))
+        handler.removeCallbacks(hideControlsRunnable)
         handler.removeCallbacks(restoreTouchable)
         handler.postDelayed(restoreTouchable, TOUCH_THROUGH_MS)
     }
@@ -357,7 +379,11 @@ class FloatingPrompterService : Service() {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
 
     private fun showControls() {
-        if (!touchThrough) controls.visibility = View.VISIBLE
+        if (!touchThrough && ::controls.isInitialized) {
+            controls.visibility = View.VISIBLE
+            handler.removeCallbacks(hideControlsRunnable)
+            handler.postDelayed(hideControlsRunnable, CONTROLS_HIDE_DELAY_MS)
+        }
     }
 
     private fun setStatus(message: String) {
@@ -385,6 +411,7 @@ class FloatingPrompterService : Service() {
 
     companion object {
         private const val FRAME_MS = 16L
+        private const val CONTROLS_HIDE_DELAY_MS = 3500L
         private const val DRAG_THRESHOLD_PX = 8
         private const val DEFAULT_BACKGROUND_ALPHA = 218
         private const val DEFAULT_TEXT_ALPHA = 255
