@@ -625,11 +625,31 @@ class TeleprompterActivity : ComponentActivity() {
             return
         }
         setStatus(getString(R.string.overlay_permission_required))
+        AlertDialog.Builder(this)
+            .setTitle(R.string.overlay_permission_title)
+            .setMessage(R.string.overlay_permission_message)
+            .setPositiveButton(R.string.open_overlay_settings) { _, _ ->
+                openPrompterOverlaySettings()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+        showControls()
+    }
+
+    private fun openPrompterOverlaySettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            launchBeautyCameraMode()
+            return
+        }
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             android.net.Uri.parse("package:$packageName")
         )
-        overlayPermissionLauncher.launch(intent)
+        if (intent.resolveActivity(packageManager) != null) {
+            overlayPermissionLauncher.launch(intent)
+        } else {
+            overlayPermissionLauncher.launch(Intent(Settings.ACTION_SETTINGS))
+        }
     }
 
     private fun launchBeautyCameraMode() {

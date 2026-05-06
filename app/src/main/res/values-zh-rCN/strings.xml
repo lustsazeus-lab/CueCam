@@ -65,6 +65,9 @@
     <string name="system_camera_launch">将打开系统相机，并使用悬浮提词器进行美颜录制。</string>
     <string name="system_camera_launch_with_overlay">正在打开系统相机，并覆盖全屏悬浮提词器。</string>
     <string name="overlay_permission_required">请允许“显示在其他应用上层”，CueCam 才能在系统相机上显示提词。</string>
+    <string name="overlay_permission_title">开启悬浮提词权限</string>
+    <string name="overlay_permission_message">美颜相机模式需要“显示在其他应用上层”权限。CueCam 只用这个权限把提词字幕显示在系统相机上方，这样你可以使用手机自带相机的美颜、前后摄和相机设置，同时继续看稿。&#10;&#10;点击“去开启”，在系统设置里允许 CueCam 显示在其他应用上层，然后返回 CueCam 再点一次“美颜相机”。</string>
+    <string name="open_overlay_settings">去开启</string>
     <string name="overlay_permission_denied">未开启悬浮提词权限。</string>
     <string name="floating_status">悬浮提词器已覆盖摄像画面，保证字幕可读。</string>
     <string name="floating_touch_camera_status">相机操作模式：现在可以点击系统相机，几秒后恢复提词控制。</string>

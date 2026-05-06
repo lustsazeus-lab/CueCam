@@ -65,6 +65,9 @@
     <string name="system_camera_launch">Opening system camera. Use the floating prompter for beauty recording.</string>
     <string name="system_camera_launch_with_overlay">Opening system camera with fullscreen floating prompter.</string>
     <string name="overlay_permission_required">Allow display over other apps, then CueCam can show prompts over the system camera.</string>
+    <string name="overlay_permission_title">Enable floating prompter permission</string>
+    <string name="overlay_permission_message">Beauty Camera mode needs the Display over other apps permission. CueCam uses it only to show your teleprompter text above the system camera, so you can use the phone camera\'s beauty filters while reading the script.&#10;&#10;Tap Go to settings, enable Display over other apps for CueCam, then return to CueCam and tap Beauty Camera again.</string>
+    <string name="open_overlay_settings">Go to settings</string>
     <string name="overlay_permission_denied">Floating prompter permission was not granted.</string>
     <string name="floating_status">Floating teleprompter covers the camera preview for readability.</string>
     <string name="floating_touch_camera_status">Camera operation mode: touch the system camera now. Controls return in a few seconds.</string>
