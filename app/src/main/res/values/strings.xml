@@ -25,7 +25,7 @@
     <string name="hide_preview">Hide Preview</string>
     <string name="show_preview">Show Preview</string>
     <string name="quality_fps_short">Quality/FPS</string>
-    <string name="system_camera">System Camera</string>
+    <string name="system_camera">Beauty Camera</string>
     <string name="overlay_alpha_default">Prompt overlay opacity: 112/255</string>
     <string name="overlay_alpha_label">Prompt overlay opacity: %1$d/255</string>
     <string name="pause">Pause</string>
@@ -62,7 +62,16 @@
     <string name="recording_now">Recording: %1$s</string>
     <string name="recording_failed">Recording failed. Please try again.</string>
     <string name="recording_saved">Saved to system Videos / Movies / CueCam.</string>
-    <string name="system_camera_launch">Opening system camera. CueCam cannot overlay prompts on another camera app.</string>
+    <string name="system_camera_launch">Opening system camera. Use the floating prompter for beauty recording.</string>
+    <string name="system_camera_launch_with_overlay">Opening system camera with fullscreen floating prompter.</string>
+    <string name="overlay_permission_required">Allow display over other apps, then CueCam can show prompts over the system camera.</string>
+    <string name="overlay_permission_denied">Floating prompter permission was not granted.</string>
+    <string name="floating_status">Floating teleprompter covers the camera preview for readability.</string>
+    <string name="floating_touch_camera_status">Camera operation mode: touch the system camera now. Controls return in a few seconds.</string>
+    <string name="floating_touch_restored">Floating prompter controls restored.</string>
+    <string name="touch_camera">Touch Camera</string>
+    <string name="floating_bg_alpha_label">Background opacity: %1$d/255</string>
+    <string name="floating_text_alpha_label">Text opacity: %1$d/255</string>
     <string name="no_system_camera">No system video recorder is available on this device.</string>
     <string name="quality_button">Quality: %1$s/%2$dfps</string>
     <string name="choose_resolution">Choose recording resolution</string>

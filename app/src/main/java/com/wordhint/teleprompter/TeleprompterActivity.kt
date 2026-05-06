@@ -12,11 +12,13 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Range
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -101,6 +103,7 @@ class TeleprompterActivity : ComponentActivity() {
     private val systemCameraLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        stopFloatingPrompterOverlay()
         val ok = result.resultCode == RESULT_OK
         setStatus(if (ok) {
             getString(R.string.system_camera_done)
@@ -108,6 +111,17 @@ class TeleprompterActivity : ComponentActivity() {
             getString(R.string.system_camera_cancelled)
         })
         showControls()
+    }
+
+    private val overlayPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (canDrawPrompterOverlay()) {
+            launchBeautyCameraMode()
+        } else {
+            setStatus(getString(R.string.overlay_permission_denied))
+            showControls()
+        }
     }
 
     private val scrollTick = object : Runnable {
@@ -143,7 +157,13 @@ class TeleprompterActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        enterFullScreen()
         handler.post(scrollTick)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) enterFullScreen()
     }
 
     override fun onPause() {
@@ -275,7 +295,7 @@ class TeleprompterActivity : ComponentActivity() {
             showControls()
         }
         systemCameraButton.setOnClickListener {
-            launchSystemCamera()
+            startBeautyCameraMode()
             showControls()
         }
         alphaSeek.max = MAX_OVERLAY_ALPHA - MIN_OVERLAY_ALPHA
@@ -588,16 +608,65 @@ class TeleprompterActivity : ComponentActivity() {
         updateCameraButtons()
     }
 
+    private fun startBeautyCameraMode() {
+        if (!canDrawPrompterOverlay()) {
+            requestPrompterOverlayPermission()
+            return
+        }
+        launchBeautyCameraMode()
+    }
+
+    private fun canDrawPrompterOverlay(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
+
+    private fun requestPrompterOverlayPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            launchBeautyCameraMode()
+            return
+        }
+        setStatus(getString(R.string.overlay_permission_required))
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            android.net.Uri.parse("package:$packageName")
+        )
+        overlayPermissionLauncher.launch(intent)
+    }
+
+    private fun launchBeautyCameraMode() {
+        startFloatingPrompterOverlay()
+        launchSystemCamera()
+    }
+
+    private fun startFloatingPrompterOverlay() {
+        val current = script ?: return
+        val intent = Intent(this, FloatingPrompterService::class.java).apply {
+            putExtra(FloatingPrompterService.EXTRA_CONTENT, current.content)
+            putExtra(FloatingPrompterService.EXTRA_SPEED, currentSpeed())
+            putExtra(FloatingPrompterService.EXTRA_FONT_SIZE, currentFontSize())
+            putExtra(FloatingPrompterService.EXTRA_TEXT_COLOR, current.textColor)
+            putExtra(FloatingPrompterService.EXTRA_BACKGROUND_COLOR, current.backgroundColor)
+        }
+        startService(intent)
+    }
+
     private fun launchSystemCamera() {
         val intent = Intent(android.provider.MediaStore.ACTION_VIDEO_CAPTURE).apply {
             putExtra(android.provider.MediaStore.EXTRA_VIDEO_QUALITY, 1)
         }
         if (intent.resolveActivity(packageManager) != null) {
-            setStatus(getString(R.string.system_camera_launch))
+            setStatus(getString(R.string.system_camera_launch_with_overlay))
             systemCameraLauncher.launch(intent)
         } else {
+            stopFloatingPrompterOverlay()
             setStatus(getString(R.string.no_system_camera))
         }
+    }
+
+    private fun stopFloatingPrompterOverlay() {
+        val intent = Intent(this, FloatingPrompterService::class.java).apply {
+            action = FloatingPrompterService.ACTION_STOP
+        }
+        startService(intent)
     }
 
     private fun updateCameraButtons() {
@@ -673,7 +742,14 @@ class TeleprompterActivity : ComponentActivity() {
     }
 
     private fun enterFullScreen() {
+        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
             window.insetsController?.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
             window.insetsController?.systemBarsBehavior =
                 WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE

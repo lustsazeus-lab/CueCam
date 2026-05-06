@@ -20,7 +20,8 @@ English name: **CueCam**
 - 支持录制分辨率和 FPS 目标选择：2160p、1080p、720p、480p，以及 24/30/60fps。
 - 录制过程中显示计时器。
 - 视频保存到 Android 系统媒体库：`Movies/CueCam`。
-- 可选调用系统相机，适合使用手机厂商相机 App 自带设置。
+- 美颜相机模式：调用系统相机，并用全屏悬浮提词器覆盖相机画面。
+- 悬浮提词器可调背景颜色深度、文字透明度、速度和字号，并可临时透传触控来操作系统相机。
 - 毛玻璃风格控制面板和重新设计的桌面图标。
 
 ## 适合谁使用
@@ -52,9 +53,9 @@ English name: **CueCam**
 CueCam 有两种摄像头使用方式：
 
 - **App 内置摄像头**：支持提词器叠加、前后摄像头切换、录制、隐藏预览、分辨率/FPS 选择和录制计时器。
-- **系统相机**：打开手机自带相机 App。它适合使用厂商相机里的高级设置，但 Android 默认不允许一个普通 App 在另一个相机 App 上稳定显示全屏提词器，所以系统相机模式不提供提词叠加。
+- **美颜相机模式**：打开手机自带相机 App，同时启动 CueCam 的全屏悬浮提词器。这个模式适合使用厂商相机自带美颜、前后摄切换和相机设置。
 
-日常使用建议选择 App 内置摄像头。
+美颜相机模式需要 Android 的“显示在其他应用上层”权限。悬浮提词器默认用高透明遮罩覆盖摄像头动态图像，保证字幕可读；需要点击系统相机按钮时，可以点“操作相机”临时透传触控，几秒后自动恢复提词控制。
 
 ## 视频保存位置
 
@@ -77,6 +78,7 @@ Movies/CueCam/VID_yyyyMMdd_HHmmss.mp4
   - 摄像头
   - 麦克风
   - Android 9 及以下需要写入存储权限
+  - 美颜相机模式需要“显示在其他应用上层”权限
 
 不同手机对分辨率和 FPS 的支持不完全一样。CueCam 会请求你选择的质量和帧率；如果硬件不支持，会按 CameraX 的能力自动回退。
 
@@ -139,7 +141,8 @@ Chinese name: **CueCam 提词相机**
 - Recording resolution and FPS selector: 2160p, 1080p, 720p, 480p and 24/30/60fps target options.
 - Recording timer while capturing video.
 - Saves recordings to the Android media library: `Movies/CueCam`.
-- Optional system camera launch for devices whose built-in camera app provides extra settings.
+- Beauty Camera mode launches the system camera and covers it with a fullscreen floating teleprompter.
+- Floating teleprompter supports background opacity, text opacity, speed, font size, and temporary touch-through for operating the system camera.
 - Glass-style recording controls and refreshed CueCam launcher icon.
 
 ## Who It Is For
@@ -171,9 +174,9 @@ The script editor accepts multilingual content directly. Scripts are stored loca
 CueCam has two camera paths:
 
 - **In-app camera**: supports teleprompter overlay, front/back camera switch, recording, preview hiding, quality/FPS options, and recording timer.
-- **System camera**: opens the phone's built-in camera app. This is useful for vendor camera settings, but Android does not allow CueCam to draw its teleprompter over another camera app without high-risk overlay permissions, so fullscreen prompting is not available inside the external camera app.
+- **Beauty Camera mode**: opens the phone's built-in camera app and starts CueCam's fullscreen floating teleprompter. This is the best path when you need vendor beauty filters, camera settings, and front/back switching from the phone's own camera app.
 
-For normal use, use the in-app camera.
+Beauty Camera mode requires Android's "display over other apps" permission. The floating prompter uses a strong readable background over the moving camera preview, and includes a temporary touch-through button so you can operate the system camera underneath.
 
 ## Where Videos Are Saved
 
@@ -196,6 +199,7 @@ They should appear in the phone's Gallery, Photos, or Videos app after recording
   - Camera
   - Microphone
   - Storage write permission only on Android 9 and older.
+  - Display over other apps for Beauty Camera mode.
 
 Camera resolution and FPS support depends on the device. CueCam requests the selected quality/FPS and falls back when the hardware does not support the exact target.
 

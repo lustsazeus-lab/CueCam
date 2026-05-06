@@ -25,7 +25,7 @@
     <string name="hide_preview">隐藏录制画面</string>
     <string name="show_preview">显示录制画面</string>
     <string name="quality_fps_short">画质/FPS</string>
-    <string name="system_camera">系统相机</string>
+    <string name="system_camera">美颜相机</string>
     <string name="overlay_alpha_default">提词遮罩透明度：112/255</string>
     <string name="overlay_alpha_label">提词遮罩透明度：%1$d/255</string>
     <string name="pause">暂停</string>
@@ -62,7 +62,16 @@
     <string name="recording_now">正在录制：%1$s</string>
     <string name="recording_failed">录制失败，请重试。</string>
     <string name="recording_saved">录制完成：已保存到系统视频 / Movies / CueCam。</string>
-    <string name="system_camera_launch">将打开系统相机。系统相机模式下，CueCam 不能覆盖在相机 App 上。</string>
+    <string name="system_camera_launch">将打开系统相机，并使用悬浮提词器进行美颜录制。</string>
+    <string name="system_camera_launch_with_overlay">正在打开系统相机，并覆盖全屏悬浮提词器。</string>
+    <string name="overlay_permission_required">请允许“显示在其他应用上层”，CueCam 才能在系统相机上显示提词。</string>
+    <string name="overlay_permission_denied">未开启悬浮提词权限。</string>
+    <string name="floating_status">悬浮提词器已覆盖摄像画面，保证字幕可读。</string>
+    <string name="floating_touch_camera_status">相机操作模式：现在可以点击系统相机，几秒后恢复提词控制。</string>
+    <string name="floating_touch_restored">悬浮提词控制已恢复。</string>
+    <string name="touch_camera">操作相机</string>
+    <string name="floating_bg_alpha_label">背景透明度：%1$d/255</string>
+    <string name="floating_text_alpha_label">文字透明度：%1$d/255</string>
     <string name="no_system_camera">当前设备没有可用的系统录像应用。</string>
     <string name="quality_button">画质：%1$s/%2$dfps</string>
     <string name="choose_resolution">选择录制分辨率</string>
