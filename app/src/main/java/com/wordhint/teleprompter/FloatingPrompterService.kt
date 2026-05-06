@@ -368,6 +368,7 @@ class FloatingPrompterService : Service() {
             baseWindowFlags()
         }
         windowParams.alpha = if (touchThrough) TOUCH_THROUGH_WINDOW_ALPHA else 1f
+        overlayRoot.visibility = if (touchThrough) View.INVISIBLE else View.VISIBLE
         windowManager.updateViewLayout(overlayRoot, windowParams)
         controls.visibility = if (touchThrough) View.GONE else View.VISIBLE
     }
@@ -420,7 +421,7 @@ class FloatingPrompterService : Service() {
         private const val MIN_TEXT_ALPHA = 120
         private const val MAX_TEXT_ALPHA = 255
         private const val TOUCH_THROUGH_MS = 7000L
-        private const val TOUCH_THROUGH_WINDOW_ALPHA = 0.78f
+        private const val TOUCH_THROUGH_WINDOW_ALPHA = 0f
 
         const val ACTION_STOP = "com.wordhint.teleprompter.action.STOP_FLOATING_PROMPTER"
         const val EXTRA_CONTENT = "content"

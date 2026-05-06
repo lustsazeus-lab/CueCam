@@ -11,8 +11,8 @@ android {
         applicationId = "com.wordhint.teleprompter"
         minSdk = 23
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.4.3"
+        versionCode = 9
+        versionName = "1.4.4"
 
         testInstrumentationRunner = "android.test.InstrumentationTestRunner"
     }
